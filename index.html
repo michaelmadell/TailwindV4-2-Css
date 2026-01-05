@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind v4 → CSS Converter</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --accent: #2563eb;
+    }
+
+    .theme-dark {
+      --bg: #121212;
+      --panel: #1c1c1e;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #2f2f33;
+      --accent: #6b7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 120ms ease, color 120ms ease;
+    }
+
+    header {
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      justify-content: space-between;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    p.lead {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 620px;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 16px 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .label {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+
+    textarea, pre {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      resize: vertical;
+      min-height: 140px;
+    }
+
+    textarea:focus, pre:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .warning { color: #d97706; }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .samples {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sample-row {
+      display: grid;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-text">
+      <h1>Tailwind v4 → CSS</h1>
+      <p class="lead">Paste utility classes and get their CSS counterparts. No build step.</p>
+    </div>
+    <button id="themeToggle" class="secondary">Toggle theme</button>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="label">Tailwind Classes</div>
+      <textarea id="input" placeholder="Example: p-4 bg-blue-500 text-white rounded-lg shadow"></textarea>
+      <div class="muted">Separate utilities with spaces. The converter applies them in order, later classes override earlier ones.</div>
+      <div class="row">
+        <button id="clear">Clear</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="label">CSS Output</div>
+      <pre id="output"></pre>
+      <div class="muted warning" id="warnings"></div>
+      <div class="row">
+        <button id="copy">Copy CSS</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="label">Samples</div>
+      <div id="samples" class="samples"></div>
+    </section>
+  </main>
+
+  <script>
+    const spacingScale = {
+      '0': '0rem', '0.5': '0.125rem', '1': '0.25rem', '1.5': '0.375rem', '2': '0.5rem',
+      '2.5': '0.625rem', '3': '0.75rem', '3.5': '0.875rem', '4': '1rem', '5': '1.25rem',
+      '6': '1.5rem', '7': '1.75rem', '8': '2rem', '9': '2.25rem', '10': '2.5rem',
+      '11': '2.75rem', '12': '3rem', '14': '3.5rem', '16': '4rem', '20': '5rem'
+    };
+
+    const colorScale = {
+      slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
+      gray:  { 50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db', 400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827' },
+      red:   { 50: '#fef2f2', 100: '#fee2e2', 200: '#fecdd3', 300: '#fca5a5', 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c', 800: '#991b1b', 900: '#7f1d1d' },
+      orange:{ 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' },
+      yellow:{ 50: '#fefce8', 100: '#fef9c3', 200: '#fef08a', 300: '#fde047', 400: '#facc15', 500: '#eab308', 600: '#ca8a04', 700: '#a16207', 800: '#854d0e', 900: '#713f12' },
+      green: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+      teal:  { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
+      blue:  { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+      indigo:{ 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' },
+      purple:{ 50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87' },
+      pink:  { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' },
+      neutral:{ 50: '#fafafa', 100: '#f5f5f5', 200: '#e5e5e5', 300: '#d4d4d4', 400: '#a3a3a3', 500: '#737373', 600: '#525252', 700: '#404040', 800: '#262626', 900: '#171717' }
+    };
+
+    const keywordColors = {
+      white: '#ffffff',
+      black: '#000000',
+      transparent: 'transparent',
+      current: 'currentColor'
+    };
+
+    const directMap = {
+      'block': { display: 'block' },
+      'inline-block': { display: 'inline-block' },
+      'inline': { display: 'inline' },
+      'flex': { display: 'flex' },
+      'inline-flex': { display: 'inline-flex' },
+      'grid': { display: 'grid' },
+      'hidden': { display: 'none' },
+      'items-center': { 'align-items': 'center' },
+      'items-start': { 'align-items': 'flex-start' },
+      'items-end': { 'align-items': 'flex-end' },
+      'justify-center': { 'justify-content': 'center' },
+      'justify-start': { 'justify-content': 'flex-start' },
+      'justify-end': { 'justify-content': 'flex-end' },
+      'justify-between': { 'justify-content': 'space-between' },
+      'gap-2': { gap: spacingScale['2'] },
+      'gap-3': { gap: spacingScale['3'] },
+      'gap-4': { gap: spacingScale['4'] },
+      'text-left': { 'text-align': 'left' },
+      'text-center': { 'text-align': 'center' },
+      'text-right': { 'text-align': 'right' },
+      'font-light': { 'font-weight': '300' },
+      'font-normal': { 'font-weight': '400' },
+      'font-medium': { 'font-weight': '500' },
+      'font-semibold': { 'font-weight': '600' },
+      'font-bold': { 'font-weight': '700' },
+      'uppercase': { 'text-transform': 'uppercase' },
+      'lowercase': { 'text-transform': 'lowercase' },
+      'capitalize': { 'text-transform': 'capitalize' },
+      'italic': { 'font-style': 'italic' },
+      'not-italic': { 'font-style': 'normal' },
+      'underline': { 'text-decoration-line': 'underline' },
+      'no-underline': { 'text-decoration-line': 'none' },
+      'rounded-none': { 'border-radius': '0' },
+      'rounded-sm': { 'border-radius': '0.125rem' },
+      'rounded': { 'border-radius': '0.25rem' },
+      'rounded-md': { 'border-radius': '0.375rem' },
+      'rounded-lg': { 'border-radius': '0.5rem' },
+      'rounded-xl': { 'border-radius': '0.75rem' },
+      'rounded-2xl': { 'border-radius': '1rem' },
+      'rounded-3xl': { 'border-radius': '1.5rem' },
+      'rounded-full': { 'border-radius': '9999px' },
+      'shadow-sm': { 'box-shadow': '0 1px 2px 0 rgb(0 0 0 / 0.05)' },
+      'shadow': { 'box-shadow': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' },
+      'shadow-md': { 'box-shadow': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' },
+      'shadow-lg': { 'box-shadow': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' },
+      'shadow-xl': { 'box-shadow': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04)' },
+      'shadow-2xl': { 'box-shadow': '0 25px 50px -12px rgb(0 0 0 / 0.25)' },
+      'shadow-none': { 'box-shadow': 'none' },
+      'border': { 'border-width': '1px' },
+      'border-0': { 'border-width': '0px' },
+      'border-2': { 'border-width': '2px' },
+      'border-4': { 'border-width': '4px' },
+      'border-8': { 'border-width': '8px' },
+      'border-solid': { 'border-style': 'solid' },
+      'border-dashed': { 'border-style': 'dashed' },
+      'border-dotted': { 'border-style': 'dotted' },
+      'border-none': { 'border-style': 'none', 'border-width': '0' },
+      'w-full': { width: '100%' },
+      'h-full': { height: '100%' },
+      'min-w-full': { 'min-width': '100%' },
+      'min-h-full': { 'min-height': '100%' },
+      'max-w-screen': { 'max-width': '100vw' },
+      'text-xs': { 'font-size': '0.75rem', 'line-height': '1rem' },
+      'text-sm': { 'font-size': '0.875rem', 'line-height': '1.25rem' },
+      'text-base': { 'font-size': '1rem', 'line-height': '1.5rem' },
+      'text-lg': { 'font-size': '1.125rem', 'line-height': '1.75rem' },
+      'text-xl': { 'font-size': '1.25rem', 'line-height': '1.75rem' },
+      'text-2xl': { 'font-size': '1.5rem', 'line-height': '2rem' },
+      'text-3xl': { 'font-size': '1.875rem', 'line-height': '2.25rem' },
+      'text-4xl': { 'font-size': '2.25rem', 'line-height': '2.5rem' },
+      'text-5xl': { 'font-size': '3rem', 'line-height': '1' },
+      'text-6xl': { 'font-size': '3.75rem', 'line-height': '1' }
+    };
+
+    const classParsers = [
+      {
+        test: /^m([trblxy]?)-([-\d./]+)$/,
+        apply: (match, rules) => applySpacing(match, rules, 'margin')
+      },
+      {
+        test: /^p([trblxy]?)-([-\d./]+)$/,
+        apply: (match, rules) => applySpacing(match, rules, 'padding')
+      },
+      {
+        test: /^m([trblxy]?)-\[(.+)\]$/,
+        apply: (match, rules) => applySpacingValue(match, rules, 'margin')
+      },
+      {
+        test: /^p([trblxy]?)-\[(.+)\]$/,
+        apply: (match, rules) => applySpacingValue(match, rules, 'padding')
+      },
+      {
+        test: /^border-(\d+)$/,
+        apply: (match, rules) => { rules['border-width'] = match[1] + 'px'; }
+      },
+      {
+        test: /^border-([a-z]+)-(\d{2,3})$/,
+        apply: (match, rules) => {
+          const c = resolveColor(match[1], match[2]);
+          if (c) rules['border-color'] = c;
+        }
+      },
+      {
+        test: /^border-([a-z]+)-(\d{2,3})\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const base = resolveColor(match[1], match[2]);
+          const color = withOpacity(base, parseInt(match[3], 10));
+          if (color) rules['border-color'] = color;
+        }
+      },
+      {
+        test: /^border-(white|black|transparent|current)$/,
+        apply: (match, rules) => {
+          const c = keywordColors[match[1]];
+          if (c) rules['border-color'] = c;
+        }
+      },
+      {
+        test: /^bg-([a-z]+)-(\d{2,3})$/,
+        apply: (match, rules) => {
+          const c = resolveColor(match[1], match[2]);
+          if (c) rules['background-color'] = c;
+        }
+      },
+      {
+        test: /^bg-([a-z]+)-(\d{2,3})\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const base = resolveColor(match[1], match[2]);
+          const color = withOpacity(base, parseInt(match[3], 10));
+          if (color) rules['background-color'] = color;
+        }
+      },
+      {
+        test: /^bg-(white|black|transparent|current)$/,
+        apply: (match, rules) => {
+          const c = keywordColors[match[1]];
+          if (c) rules['background-color'] = c;
+        }
+      },
+      {
+        test: /^text-([a-z]+)-(\d{2,3})$/,
+        apply: (match, rules) => {
+          const c = resolveColor(match[1], match[2]);
+          if (c) rules['color'] = c;
+        }
+      },
+      {
+        test: /^text-([a-z]+)-(\d{2,3})\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const base = resolveColor(match[1], match[2]);
+          const color = withOpacity(base, parseInt(match[3], 10));
+          if (color) rules['color'] = color;
+        }
+      },
+      {
+        test: /^text-(white|black|transparent|current)$/,
+        apply: (match, rules) => {
+          const c = keywordColors[match[1]];
+          if (c) rules['color'] = c;
+        }
+      },
+      {
+        test: /^text-\[(.+)\]$/,
+        apply: (match, rules) => { rules['color'] = match[1]; }
+      },
+      {
+        test: /^text-\[(.+)\]\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const color = withOpacity(match[1], parseInt(match[2], 10));
+          if (color) rules['color'] = color;
+        }
+      },
+      {
+        test: /^bg-\[(.+)\]$/,
+        apply: (match, rules) => { rules['background-color'] = match[1]; }
+      },
+      {
+        test: /^bg-\[(.+)\]\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const color = withOpacity(match[1], parseInt(match[2], 10));
+          if (color) rules['background-color'] = color;
+        }
+      },
+      {
+        test: /^border-\[(.+)\]$/,
+        apply: (match, rules) => { rules['border-color'] = match[1]; }
+      },
+      {
+        test: /^border-\[(.+)\]\/(\d{1,3})$/,
+        apply: (match, rules) => {
+          const color = withOpacity(match[1], parseInt(match[2], 10));
+          if (color) rules['border-color'] = color;
+        }
+      },
+      {
+        test: /^w-(\d+)$/,
+        apply: (match, rules) => { rules['width'] = parseInt(match[1], 10) + 'px'; }
+      },
+      {
+        test: /^w-\[(.+)\]$/,
+        apply: (match, rules) => { rules['width'] = match[1]; }
+      },
+      {
+        test: /^h-(\d+)$/,
+        apply: (match, rules) => { rules['height'] = parseInt(match[1], 10) + 'px'; }
+      },
+      {
+        test: /^h-\[(.+)\]$/,
+        apply: (match, rules) => { rules['height'] = match[1]; }
+      },
+      {
+        test: /^(min|max)-w-\[(.+)\]$/,
+        apply: (match, rules) => { rules[`${match[1]}-width`] = match[2]; }
+      },
+      {
+        test: /^(min|max)-h-\[(.+)\]$/,
+        apply: (match, rules) => { rules[`${match[1]}-height`] = match[2]; }
+      },
+      {
+        test: /^w-(1\/2|1\/3|2\/3|1\/4|3\/4)$/,
+        apply: (match, rules) => {
+          const fractions = { '1/2': '50%', '1/3': '33.333%', '2/3': '66.666%', '1/4': '25%', '3/4': '75%' };
+          rules['width'] = fractions[match[1]];
+        }
+      },
+      {
+        test: /^h-(1\/2|1\/3|2\/3|1\/4|3\/4)$/,
+        apply: (match, rules) => {
+          const fractions = { '1/2': '50%', '1/3': '33.333%', '2/3': '66.666%', '1/4': '25%', '3/4': '75%' };
+          rules['height'] = fractions[match[1]];
+        }
+      },
+      {
+        test: /^leading-(none|tight|snug|normal|relaxed|loose)$/,
+        apply: (match, rules) => {
+          const map = { none: '1', tight: '1.1', snug: '1.3', normal: '1.5', relaxed: '1.625', loose: '2' };
+          rules['line-height'] = map[match[1]];
+        }
+      },
+      {
+        test: /^tracking-(tighter|tight|normal|wide|wider|widest)$/,
+        apply: (match, rules) => {
+          const map = { tighter: '-0.05em', tight: '-0.025em', normal: '0em', wide: '0.025em', wider: '0.05em', widest: '0.1em' };
+          rules['letter-spacing'] = map[match[1]];
+        }
+      }
+    ];
+
+    function resolveColor(name, shade) {
+      if (!shade && keywordColors[name]) return keywordColors[name];
+      const family = colorScale[name];
+      return family && family[shade] ? family[shade] : keywordColors[name] ?? null;
+    }
+
+    function hexToRgb(hex) {
+      if (!hex || hex[0] !== '#') return null;
+      const normalized = hex.replace('#', '').trim();
+      const expand = (str) => str.split('').map((ch) => ch + ch).join('');
+      let value = normalized;
+      if (normalized.length === 3 || normalized.length === 4) {
+        value = expand(normalized.slice(0, 3));
+      }
+      if (value.length !== 6 && value.length !== 8) return null;
+      const intVal = parseInt(value.slice(0, 6), 16);
+      const alpha = value.length === 8 ? parseInt(value.slice(6), 16) / 255 : 1;
+      return {
+        r: (intVal >> 16) & 255,
+        g: (intVal >> 8) & 255,
+        b: intVal & 255,
+        a: alpha
+      };
+    }
+
+    function withOpacity(baseColor, opacityPercent) {
+      if (!baseColor) return null;
+      const alpha = Math.max(0, Math.min(100, opacityPercent)) / 100;
+      const rgb = hexToRgb(baseColor);
+      if (rgb) {
+        const finalAlpha = Math.round((rgb.a ?? 1) * alpha * 1000) / 1000;
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${finalAlpha})`;
+      }
+      // Fallback for non-hex colors: use color-mix to blend with transparent
+      return `color-mix(in srgb, ${baseColor} ${opacityPercent}%, transparent)`;
+    }
+
+    function applySpacing(match, rules, property) {
+      const axis = match[1];
+      const token = match[2];
+      const value = spacingScale[token] ?? null;
+      if (!value) return;
+      if (axis === '') {
+        rules[property] = value;
+      } else if (axis === 'x') {
+        rules[property + '-left'] = value;
+        rules[property + '-right'] = value;
+      } else if (axis === 'y') {
+        rules[property + '-top'] = value;
+        rules[property + '-bottom'] = value;
+      } else if (axis === 't') {
+        rules[property + '-top'] = value;
+      } else if (axis === 'r') {
+        rules[property + '-right'] = value;
+      } else if (axis === 'b') {
+        rules[property + '-bottom'] = value;
+      } else if (axis === 'l') {
+        rules[property + '-left'] = value;
+      }
+    }
+
+    function applySpacingValue(match, rules, property) {
+      const axis = match[1];
+      const raw = match[2];
+      const value = raw;
+      if (!value) return;
+      if (axis === '') {
+        rules[property] = value;
+      } else if (axis === 'x') {
+        rules[property + '-left'] = value;
+        rules[property + '-right'] = value;
+      } else if (axis === 'y') {
+        rules[property + '-top'] = value;
+        rules[property + '-bottom'] = value;
+      } else if (axis === 't') {
+        rules[property + '-top'] = value;
+      } else if (axis === 'r') {
+        rules[property + '-right'] = value;
+      } else if (axis === 'b') {
+        rules[property + '-bottom'] = value;
+      } else if (axis === 'l') {
+        rules[property + '-left'] = value;
+      }
+    }
+
+    function convert(classes) {
+      const rules = {};
+      const unknown = [];
+      const tokens = classes.trim().split(/\s+/).filter(Boolean);
+
+      for (const token of tokens) {
+        if (directMap[token]) {
+          Object.assign(rules, directMap[token]);
+          continue;
+        }
+
+        let matched = false;
+        for (const parser of classParsers) {
+          const m = token.match(parser.test);
+          if (m) {
+            parser.apply(m, rules);
+            matched = true;
+            break;
+          }
+        }
+
+        if (!matched) {
+          unknown.push(token);
+        }
+      }
+
+      const css = Object.entries(rules)
+        .map(([prop, val]) => `${prop}: ${val};`)
+        .join('\n');
+
+      return { css, unknown };
+    }
+
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const warningsEl = document.getElementById('warnings');
+    const copyBtn = document.getElementById('copy');
+    const clearBtn = document.getElementById('clear');
+    const themeToggle = document.getElementById('themeToggle');
+    const samplesEl = document.getElementById('samples');
+
+    const samples = [
+      { label: 'Basic card', classes: 'p-4 bg-blue-500/50 text-white rounded-lg shadow-md border-2 border-blue-700' },
+      { label: 'Arbitrary spacing', classes: 'p-[18px] mx-[2rem] text-gray-700 bg-gray-100 border-[1px]/40' },
+      { label: 'Exact sizing', classes: 'w-[420px] h-[120px] border border-dashed text-center' },
+      { label: 'Custom color', classes: 'bg-[#123]/60 text-[rgb(20,20,20)]/80 p-4 rounded' },
+      { label: 'Min/max demo', classes: 'min-w-[240px] max-w-[640px] min-h-[120px] bg-neutral-200 text-neutral-800 p-4' }
+    ];
+
+    function setTheme(mode) {
+      if (mode === 'dark') {
+        document.body.classList.add('theme-dark');
+      } else {
+        document.body.classList.remove('theme-dark');
+      }
+      localStorage.setItem('twcss-theme', mode);
+      themeToggle.textContent = mode === 'dark' ? 'Light mode' : 'Dark mode';
+    }
+
+    function loadTheme() {
+      const stored = localStorage.getItem('twcss-theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const mode = stored || (prefersDark ? 'dark' : 'light');
+      setTheme(mode);
+    }
+
+    function render() {
+      const { css, unknown } = convert(inputEl.value);
+      outputEl.textContent = css || '/* CSS will appear here */';
+      warningsEl.textContent = unknown.length ? `Unmapped: ${unknown.join(', ')}` : '';
+    }
+
+    function renderSamples() {
+      if (!samplesEl) return;
+      samplesEl.innerHTML = '';
+      samples.forEach((sample) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'sample-row';
+        const btn = document.createElement('button');
+        btn.className = 'secondary';
+        btn.textContent = sample.label;
+        btn.addEventListener('click', () => {
+          inputEl.value = sample.classes;
+          render();
+        });
+        const code = document.createElement('pre');
+        code.textContent = sample.classes;
+        wrapper.appendChild(btn);
+        wrapper.appendChild(code);
+        samplesEl.appendChild(wrapper);
+      });
+    }
+
+    inputEl.addEventListener('input', render);
+    clearBtn.addEventListener('click', () => {
+      inputEl.value = '';
+      render();
+    });
+
+    themeToggle.addEventListener('click', () => {
+      const dark = document.body.classList.contains('theme-dark');
+      setTheme(dark ? 'light' : 'dark');
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const text = outputEl.textContent;
+      if (!text.trim()) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy CSS', 1200);
+      } catch (err) {
+        copyBtn.textContent = 'Press Ctrl+C';
+        setTimeout(() => copyBtn.textContent = 'Copy CSS', 1500);
+      }
+    });
+
+    inputEl.value = samples[0].classes;
+    loadTheme();
+    renderSamples();
+    render();
+  </script>
+</body>
+</html>
