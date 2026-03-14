@@ -9,18 +9,22 @@
       --bg: #f8fafc;
       --panel: #ffffff;
       --text: #0f172a;
-      --muted: #475569;
-      --border: #cbd5e1;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.05);
     }
 
     .theme-dark {
-      --bg: #121212;
-      --panel: #1c1c1e;
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-      --border: #2f2f33;
-      --accent: #6b7280;
+      --bg: #0f1117;
+      --panel: #181c2a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #2a3047;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
     }
 
     * { box-sizing: border-box; }
@@ -35,69 +39,102 @@
     }
 
     header {
-      padding: 16px 16px 8px;
+      padding: 18px 24px 14px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 8px 12px;
       justify-content: space-between;
-      max-width: 960px;
+      max-width: 1120px;
       margin: 0 auto;
+      border-bottom: 1px solid var(--border);
     }
 
     h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 21px;
       font-weight: 700;
+      letter-spacing: -0.025em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgb(37 99 235 / 0.1);
+      border-radius: 999px;
+      padding: 2px 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .theme-dark .header-badge {
+      background: rgb(59 130 246 / 0.15);
     }
 
     p.lead {
-      margin: 4px 0 0;
+      margin: 3px 0 0;
       color: var(--muted);
-      font-size: 14px;
-      max-width: 620px;
+      font-size: 13.5px;
+      max-width: 600px;
+      line-height: 1.55;
     }
 
     main {
-      max-width: 960px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 0 16px 32px;
+      padding: 20px 24px 48px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      main { grid-template-columns: 1fr; padding: 12px 16px 32px; }
+      header { padding: 14px 16px 12px; }
     }
 
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-samples {
+      grid-column: 1 / -1;
     }
 
     .label {
-      font-size: 12px;
-      letter-spacing: 0.06em;
+      font-size: 11px;
+      letter-spacing: 0.07em;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       display: inline-block;
       text-transform: uppercase;
+      font-weight: 600;
     }
 
     textarea, pre {
       width: 100%;
-      background: transparent;
+      background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px;
-      font-size: 14px;
+      padding: 12px;
+      font-size: 13.5px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace;
       resize: vertical;
-      min-height: 140px;
+      min-height: 220px;
+      line-height: 1.65;
     }
 
-    textarea:focus, pre:focus {
+    textarea:focus {
       outline: 2px solid var(--accent);
+      outline-offset: -1px;
       border-color: var(--accent);
     }
 
@@ -105,23 +142,32 @@
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
+      min-height: 260px;
     }
 
     .row {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 10px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     button {
       background: var(--accent);
       border: 1px solid var(--accent);
       color: #fff;
-      padding: 8px 12px;
+      padding: 7px 14px;
       border-radius: 8px;
       font-weight: 600;
+      font-size: 13px;
       cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
     }
 
     button.secondary {
@@ -130,10 +176,15 @@
       border-color: var(--border);
     }
 
+    button.secondary:hover {
+      background: var(--border);
+    }
+
     .muted {
       color: var(--muted);
       font-size: 12px;
-      margin-top: 4px;
+      margin-top: 6px;
+      line-height: 1.5;
     }
 
     .warning { color: #d97706; }
@@ -141,27 +192,135 @@
     .header-text {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
 
-    .samples {
-      display: grid;
+    .theme-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .theme-btn:hover {
+      background: var(--border);
+    }
+
+    .samples-grid {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
-    .sample-row {
-      display: grid;
+    .sample-chip {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .sample-chip:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .output-stats {
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Ensure HTML 'hidden' attribute wins over display:flex on .scoped-options */
+    [hidden] { display: none !important; }
+
+    .format-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .format-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .fmt-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 4px 12px;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 0;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+    }
+
+    .fmt-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+    .scoped-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .scoped-options .label { margin-bottom: 0; }
+
+    .scoped-options input[type="text"] {
+      font-size: 13px;
+      padding: 4px 8px;
+      min-width: 120px;
+      width: auto;
+      resize: none;
+      min-height: unset;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .scoped-options input[type="text"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+      border-color: var(--accent);
+    }
+
+    .minify-label {
+      display: flex;
+      align-items: center;
       gap: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--muted);
     }
   </style>
 </head>
 <body>
   <header>
     <div class="header-text">
-      <h1>Tailwind v4 → CSS</h1>
-      <p class="lead">Paste utility classes and get their CSS counterparts. Supports hover:, focus:, sm:, md:, lg:, xl:, dark: prefixes. No build step.</p>
+      <h1>Tailwind → CSS <span class="header-badge">v4</span></h1>
+      <p class="lead">Paste utility classes, get plain CSS. Supports hover:, focus:, sm:, md:, lg:, xl:, dark: prefixes.</p>
     </div>
-    <button id="themeToggle" class="secondary" aria-label="Toggle color theme">Toggle theme</button>
+    <button id="themeToggle" class="theme-btn" aria-label="Toggle color theme" aria-pressed="false">🌙</button>
   </header>
 
   <main>
@@ -176,16 +335,30 @@
 
     <section class="card">
       <div class="label">CSS Output</div>
+      <div class="format-row">
+        <div class="format-toggle" role="group" aria-label="Output format">
+          <button id="fmtFlat"   class="fmt-btn" aria-pressed="true">Flat</button>
+          <button id="fmtScoped" class="fmt-btn" aria-pressed="false">Scoped</button>
+        </div>
+        <div id="scopedOptions" class="scoped-options" hidden>
+          <label for="selectorInput" class="label">Selector</label>
+          <input id="selectorInput" type="text" value=".element" placeholder=".element" spellcheck="false" aria-label="CSS selector for scoped output">
+          <label class="minify-label">
+            <input id="minifyCheck" type="checkbox" aria-label="Minify output"> Minify
+          </label>
+        </div>
+      </div>
       <pre id="output" aria-live="polite" aria-label="Generated CSS output"></pre>
       <div class="muted warning" id="warnings" role="alert"></div>
+      <div class="output-stats" id="outputStats" aria-live="polite"></div>
       <div class="row">
         <button id="copy">Copy CSS</button>
       </div>
     </section>
 
-    <section class="card">
-      <div class="label">Samples</div>
-      <div id="samples" class="samples"></div>
+    <section class="card card-samples">
+      <div class="label">Quick samples — click to load</div>
+      <div id="samples" class="samples-grid"></div>
     </section>
   </main>
 
@@ -950,50 +1123,125 @@
     }
 
     // ─── UI ───────────────────────────────────────────────────────────────────
-    const inputEl = document.getElementById('input');
-    const outputEl = document.getElementById('output');
-    const warningsEl = document.getElementById('warnings');
-    const copyBtn = document.getElementById('copy');
-    const clearBtn = document.getElementById('clear');
-    const themeToggle = document.getElementById('themeToggle');
-    const samplesEl = document.getElementById('samples');
+    const inputEl       = document.getElementById('input');
+    const outputEl      = document.getElementById('output');
+    const warningsEl    = document.getElementById('warnings');
+    const outputStatsEl = document.getElementById('outputStats');
+    const copyBtn       = document.getElementById('copy');
+    const clearBtn      = document.getElementById('clear');
+    const themeToggle   = document.getElementById('themeToggle');
+    const samplesEl     = document.getElementById('samples');
+    const fmtFlatBtn    = document.getElementById('fmtFlat');
+    const fmtScopedBtn  = document.getElementById('fmtScoped');
+    const scopedOptions = document.getElementById('scopedOptions');
+    const selectorInput = document.getElementById('selectorInput');
+    const minifyCheck   = document.getElementById('minifyCheck');
 
     const BP_ORDER = Object.values(BREAKPOINTS).concat(['(prefers-color-scheme: dark)']);
+
+    // Format state (initialised from localStorage in load sequence below)
+    let formatMode    = 'flat';
+    let minifyEnabled = false;
 
     function fmtRules(rules, indent = '') {
       return Object.entries(rules).map(([p, v]) => `${indent}${p}: ${v};`).join('\n');
     }
 
-    function render() {
-      const { base, states, media, unknown } = convert(inputEl.value);
+    function sanitiseSelector(raw) {
+      const stripped = raw.replace(/["'<>{}; ]/g, '').trim();
+      return stripped || '.element';
+    }
+
+    // ─── Output formatter ─────────────────────────────────────────────────────
+    function formatOutput(groups, mode, selector, minify) {
+      const { base, states, media } = groups;
       const parts = [];
-
-      const baseStr = fmtRules(base);
-      if (baseStr) parts.push(baseStr);
-
-      for (const [state, rules] of Object.entries(states)) {
-        parts.push(`\n/* ${state} */\n` + fmtRules(rules));
-      }
 
       const sortedMedia = Object.entries(media).sort(([a], [b]) => {
         const ai = BP_ORDER.indexOf(a), bi = BP_ORDER.indexOf(b);
         return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
       });
 
-      for (const [query, group] of sortedMedia) {
-        const mediaParts = [];
-        const mBase = fmtRules(group.base, '  ');
-        if (mBase) mediaParts.push(mBase);
-        for (const [state, rules] of Object.entries(group.states)) {
-          mediaParts.push(`  /* ${state} */\n` + fmtRules(rules, '  '));
+      if (mode === 'flat') {
+        const baseStr = fmtRules(base);
+        if (baseStr) parts.push(baseStr);
+
+        for (const [state, rules] of Object.entries(states)) {
+          parts.push(`\n/* ${state} */\n` + fmtRules(rules));
         }
-        if (mediaParts.length) {
-          parts.push(`\n/* @media ${query} */\n` + mediaParts.join('\n\n'));
+
+        for (const [query, group] of sortedMedia) {
+          const mediaParts = [];
+          const mBase = fmtRules(group.base, '  ');
+          if (mBase) mediaParts.push(mBase);
+          for (const [state, rules] of Object.entries(group.states)) {
+            mediaParts.push(`  /* ${state} */\n` + fmtRules(rules, '  '));
+          }
+          if (mediaParts.length) {
+            parts.push(`\n/* @media ${query} */\n` + mediaParts.join('\n\n'));
+          }
+        }
+
+        return parts.join('\n');
+      }
+
+      // Scoped mode
+      const sel = sanitiseSelector(selector);
+
+      const baseStr = fmtRules(base, '  ');
+      if (baseStr) parts.push(`${sel} {\n${baseStr}\n}`);
+
+      for (const [state, rules] of Object.entries(states)) {
+        parts.push(`${sel}${state} {\n${fmtRules(rules, '  ')}\n}`);
+      }
+
+      for (const [query, group] of sortedMedia) {
+        const inner = [];
+        const mBase = fmtRules(group.base, '    ');
+        if (mBase) inner.push(`  ${sel} {\n${mBase}\n  }`);
+        for (const [state, rules] of Object.entries(group.states)) {
+          inner.push(`  ${sel}${state} {\n${fmtRules(rules, '    ')}\n  }`);
+        }
+        if (inner.length) {
+          parts.push(`@media ${query} {\n${inner.join('\n\n')}\n}`);
         }
       }
 
-      outputEl.textContent = parts.join('\n') || '/* CSS will appear here */';
+      const result = parts.join('\n\n');
+
+      if (!minify) return result;
+
+      // Minify: collapse whitespace, strip spaces around CSS punctuation
+      return result
+        .replace(/\s*\{\s*/g, '{')
+        .replace(/\s*\}\s*/g, '}')
+        .replace(/\s*;\s*/g, ';')
+        .replace(/\s*:\s*/g, ':')
+        .replace(/\n/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function applyFormatMode(mode) {
+      formatMode = mode;
+      fmtFlatBtn.setAttribute('aria-pressed',   String(mode === 'flat'));
+      fmtScopedBtn.setAttribute('aria-pressed', String(mode === 'scoped'));
+      scopedOptions.hidden = (mode !== 'scoped');
+      localStorage.setItem('twcss-format', mode);
+    }
+
+    function render() {
+      const { base, states, media, unknown } = convert(inputEl.value);
+      const css = formatOutput({ base, states, media }, formatMode, selectorInput.value, minifyEnabled);
+      outputEl.textContent = css || '/* CSS will appear here */';
       warningsEl.textContent = unknown.length ? `Unmapped: ${unknown.join(', ')}` : '';
+      if (css && outputStatsEl) {
+        const propCount = (css.match(/:\s*[^{};]+;/g) || []).length;
+        const lineCount = css.split('\n').length;
+        outputStatsEl.textContent = `${propCount} propert${propCount === 1 ? 'y' : 'ies'} · ${lineCount} line${lineCount === 1 ? '' : 's'}`;
+      } else if (outputStatsEl) {
+        outputStatsEl.textContent = '';
+      }
     }
 
     const samples = [
@@ -1011,7 +1259,8 @@
     function setTheme(mode) {
       document.body.classList.toggle('theme-dark', mode === 'dark');
       localStorage.setItem('twcss-theme', mode);
-      themeToggle.textContent = mode === 'dark' ? 'Light mode' : 'Dark mode';
+      themeToggle.textContent = mode === 'dark' ? '☀' : '🌙';
+      themeToggle.setAttribute('aria-label', mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
       themeToggle.setAttribute('aria-pressed', String(mode === 'dark'));
     }
 
@@ -1025,25 +1274,38 @@
       if (!samplesEl) return;
       samplesEl.innerHTML = '';
       samples.forEach((sample) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'sample-row';
-        const btn = document.createElement('button');
-        btn.className = 'secondary';
-        btn.textContent = sample.label;
-        btn.addEventListener('click', () => { inputEl.value = sample.classes; render(); });
-        const code = document.createElement('pre');
-        code.textContent = sample.classes;
-        wrapper.appendChild(btn);
-        wrapper.appendChild(code);
-        samplesEl.appendChild(wrapper);
+        const chip = document.createElement('button');
+        chip.className = 'sample-chip';
+        chip.textContent = sample.label;
+        chip.title = sample.classes;
+        chip.addEventListener('click', () => { inputEl.value = sample.classes; render(); });
+        samplesEl.appendChild(chip);
       });
     }
 
-    // Debounced input handler
+    // Debounced input handlers (one per text input)
     let debounceTimer;
     inputEl.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(render, 150);
+    });
+
+    let selectorDebounceTimer;
+    selectorInput.addEventListener('input', () => {
+      clearTimeout(selectorDebounceTimer);
+      selectorDebounceTimer = setTimeout(() => {
+        localStorage.setItem('twcss-selector', selectorInput.value);
+        render();
+      }, 150);
+    });
+
+    fmtFlatBtn.addEventListener('click', () => { applyFormatMode('flat'); render(); });
+    fmtScopedBtn.addEventListener('click', () => { applyFormatMode('scoped'); render(); });
+
+    minifyCheck.addEventListener('change', () => {
+      minifyEnabled = minifyCheck.checked;
+      localStorage.setItem('twcss-minify', String(minifyEnabled));
+      render();
     });
 
     clearBtn.addEventListener('click', () => { inputEl.value = ''; render(); });
@@ -1065,7 +1327,16 @@
       }
     });
 
+    // ─── Init ─────────────────────────────────────────────────────────────────
     inputEl.value = samples[0].classes;
+
+    // Restore format preferences before first render
+    formatMode          = localStorage.getItem('twcss-format')   || 'flat';
+    selectorInput.value = localStorage.getItem('twcss-selector') || '.element';
+    minifyEnabled       = localStorage.getItem('twcss-minify') === 'true';
+    applyFormatMode(formatMode);
+    minifyCheck.checked = minifyEnabled;
+
     loadTheme();
     renderSamples();
     render();
