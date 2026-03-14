@@ -153,6 +153,64 @@
       display: grid;
       gap: 4px;
     }
+
+    /* Ensure HTML 'hidden' attribute wins over display:flex on .scoped-options */
+    [hidden] { display: none !important; }
+
+    .format-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .format-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .fmt-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 4px 10px;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 0;
+      cursor: pointer;
+    }
+
+    .fmt-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+    .scoped-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .scoped-options .label { margin-bottom: 0; }
+
+    .scoped-options input[type="text"] {
+      min-height: unset;
+      font-size: 13px;
+      padding: 4px 8px;
+      min-width: 120px;
+      width: auto;
+      resize: none;
+    }
+
+    .minify-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -176,6 +234,19 @@
 
     <section class="card">
       <div class="label">CSS Output</div>
+      <div class="format-row">
+        <div class="format-toggle" role="group" aria-label="Output format">
+          <button id="fmtFlat"   class="fmt-btn" aria-pressed="true">Flat</button>
+          <button id="fmtScoped" class="fmt-btn" aria-pressed="false">Scoped</button>
+        </div>
+        <div id="scopedOptions" class="scoped-options" hidden>
+          <label for="selectorInput" class="label">Selector</label>
+          <input id="selectorInput" type="text" value=".element" placeholder=".element" spellcheck="false" aria-label="CSS selector for scoped output">
+          <label class="minify-label">
+            <input id="minifyCheck" type="checkbox" aria-label="Minify output"> Minify
+          </label>
+        </div>
+      </div>
       <pre id="output" aria-live="polite" aria-label="Generated CSS output"></pre>
       <div class="muted warning" id="warnings" role="alert"></div>
       <div class="row">
@@ -950,49 +1021,116 @@
     }
 
     // ─── UI ───────────────────────────────────────────────────────────────────
-    const inputEl = document.getElementById('input');
-    const outputEl = document.getElementById('output');
-    const warningsEl = document.getElementById('warnings');
-    const copyBtn = document.getElementById('copy');
-    const clearBtn = document.getElementById('clear');
-    const themeToggle = document.getElementById('themeToggle');
-    const samplesEl = document.getElementById('samples');
+    const inputEl       = document.getElementById('input');
+    const outputEl      = document.getElementById('output');
+    const warningsEl    = document.getElementById('warnings');
+    const copyBtn       = document.getElementById('copy');
+    const clearBtn      = document.getElementById('clear');
+    const themeToggle   = document.getElementById('themeToggle');
+    const samplesEl     = document.getElementById('samples');
+    const fmtFlatBtn    = document.getElementById('fmtFlat');
+    const fmtScopedBtn  = document.getElementById('fmtScoped');
+    const scopedOptions = document.getElementById('scopedOptions');
+    const selectorInput = document.getElementById('selectorInput');
+    const minifyCheck   = document.getElementById('minifyCheck');
 
     const BP_ORDER = Object.values(BREAKPOINTS).concat(['(prefers-color-scheme: dark)']);
+
+    // Format state (initialised from localStorage in load sequence below)
+    let formatMode    = 'flat';
+    let minifyEnabled = false;
 
     function fmtRules(rules, indent = '') {
       return Object.entries(rules).map(([p, v]) => `${indent}${p}: ${v};`).join('\n');
     }
 
-    function render() {
-      const { base, states, media, unknown } = convert(inputEl.value);
+    function sanitiseSelector(raw) {
+      const stripped = raw.replace(/["'<>{}; ]/g, '').trim();
+      return stripped || '.element';
+    }
+
+    // ─── Output formatter ─────────────────────────────────────────────────────
+    function formatOutput(groups, mode, selector, minify) {
+      const { base, states, media } = groups;
       const parts = [];
-
-      const baseStr = fmtRules(base);
-      if (baseStr) parts.push(baseStr);
-
-      for (const [state, rules] of Object.entries(states)) {
-        parts.push(`\n/* ${state} */\n` + fmtRules(rules));
-      }
 
       const sortedMedia = Object.entries(media).sort(([a], [b]) => {
         const ai = BP_ORDER.indexOf(a), bi = BP_ORDER.indexOf(b);
         return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
       });
 
-      for (const [query, group] of sortedMedia) {
-        const mediaParts = [];
-        const mBase = fmtRules(group.base, '  ');
-        if (mBase) mediaParts.push(mBase);
-        for (const [state, rules] of Object.entries(group.states)) {
-          mediaParts.push(`  /* ${state} */\n` + fmtRules(rules, '  '));
+      if (mode === 'flat') {
+        const baseStr = fmtRules(base);
+        if (baseStr) parts.push(baseStr);
+
+        for (const [state, rules] of Object.entries(states)) {
+          parts.push(`\n/* ${state} */\n` + fmtRules(rules));
         }
-        if (mediaParts.length) {
-          parts.push(`\n/* @media ${query} */\n` + mediaParts.join('\n\n'));
+
+        for (const [query, group] of sortedMedia) {
+          const mediaParts = [];
+          const mBase = fmtRules(group.base, '  ');
+          if (mBase) mediaParts.push(mBase);
+          for (const [state, rules] of Object.entries(group.states)) {
+            mediaParts.push(`  /* ${state} */\n` + fmtRules(rules, '  '));
+          }
+          if (mediaParts.length) {
+            parts.push(`\n/* @media ${query} */\n` + mediaParts.join('\n\n'));
+          }
+        }
+
+        return parts.join('\n');
+      }
+
+      // Scoped mode
+      const sel = sanitiseSelector(selector);
+
+      const baseStr = fmtRules(base, '  ');
+      if (baseStr) parts.push(`${sel} {\n${baseStr}\n}`);
+
+      for (const [state, rules] of Object.entries(states)) {
+        parts.push(`${sel}${state} {\n${fmtRules(rules, '  ')}\n}`);
+      }
+
+      for (const [query, group] of sortedMedia) {
+        const inner = [];
+        const mBase = fmtRules(group.base, '    ');
+        if (mBase) inner.push(`  ${sel} {\n${mBase}\n  }`);
+        for (const [state, rules] of Object.entries(group.states)) {
+          inner.push(`  ${sel}${state} {\n${fmtRules(rules, '    ')}\n  }`);
+        }
+        if (inner.length) {
+          parts.push(`@media ${query} {\n${inner.join('\n\n')}\n}`);
         }
       }
 
-      outputEl.textContent = parts.join('\n') || '/* CSS will appear here */';
+      const result = parts.join('\n\n');
+
+      if (!minify) return result;
+
+      // Minify: collapse whitespace, strip spaces around CSS punctuation
+      return result
+        .replace(/\s*\{\s*/g, '{')
+        .replace(/\s*\}\s*/g, '}')
+        .replace(/\s*;\s*/g, ';')
+        .replace(/\s*:\s*/g, ':')
+        .replace(/\n/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function applyFormatMode(mode) {
+      formatMode = mode;
+      fmtFlatBtn.setAttribute('aria-pressed',   String(mode === 'flat'));
+      fmtScopedBtn.setAttribute('aria-pressed', String(mode === 'scoped'));
+      scopedOptions.hidden = (mode !== 'scoped');
+      localStorage.setItem('twcss-format', mode);
+    }
+
+    function render() {
+      const { base, states, media, unknown } = convert(inputEl.value);
+      const css = formatOutput({ base, states, media }, formatMode, selectorInput.value, minifyEnabled);
+      outputEl.textContent = css || '/* CSS will appear here */';
       warningsEl.textContent = unknown.length ? `Unmapped: ${unknown.join(', ')}` : '';
     }
 
@@ -1039,11 +1177,29 @@
       });
     }
 
-    // Debounced input handler
+    // Debounced input handlers (one per text input)
     let debounceTimer;
     inputEl.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(render, 150);
+    });
+
+    let selectorDebounceTimer;
+    selectorInput.addEventListener('input', () => {
+      clearTimeout(selectorDebounceTimer);
+      selectorDebounceTimer = setTimeout(() => {
+        localStorage.setItem('twcss-selector', selectorInput.value);
+        render();
+      }, 150);
+    });
+
+    fmtFlatBtn.addEventListener('click', () => { applyFormatMode('flat'); render(); });
+    fmtScopedBtn.addEventListener('click', () => { applyFormatMode('scoped'); render(); });
+
+    minifyCheck.addEventListener('change', () => {
+      minifyEnabled = minifyCheck.checked;
+      localStorage.setItem('twcss-minify', String(minifyEnabled));
+      render();
     });
 
     clearBtn.addEventListener('click', () => { inputEl.value = ''; render(); });
@@ -1065,7 +1221,16 @@
       }
     });
 
+    // ─── Init ─────────────────────────────────────────────────────────────────
     inputEl.value = samples[0].classes;
+
+    // Restore format preferences before first render
+    formatMode          = localStorage.getItem('twcss-format')   || 'flat';
+    selectorInput.value = localStorage.getItem('twcss-selector') || '.element';
+    minifyEnabled       = localStorage.getItem('twcss-minify') === 'true';
+    applyFormatMode(formatMode);
+    minifyCheck.checked = minifyEnabled;
+
     loadTheme();
     renderSamples();
     render();
