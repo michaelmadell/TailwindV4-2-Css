@@ -35,6 +35,8 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
       transition: background 120ms ease, color 120ms ease;
     }
 
@@ -48,6 +50,30 @@
       max-width: 1120px;
       margin: 0 auto;
       border-bottom: 1px solid var(--border);
+    }
+
+    footer {
+      width: 100%;
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 1120px;
+      margin: auto auto 0;
+    }
+
+    footer p {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-underline-offset: 2px;
+    }
+
+    footer a:hover {
+      color: var(--accent-hover);
     }
 
     h1 {
@@ -89,6 +115,8 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
+      width: 100%;
+      flex: 1 0 auto;
     }
 
     @media (max-width: 700px) {
@@ -361,6 +389,19 @@
       <div id="samples" class="samples-grid"></div>
     </section>
   </main>
+
+  <footer style="font-size: medium;">
+    <p style="font-size: small;">
+      Tailwind CSS is a registered trademark of Tailwind Labs, Inc. This tool is an independent project and has not been authorized, sponsored, or otherwise approved by Tailwind Labs.
+    </p><br />
+    &copy; 2024 <a href="https://github.com/michaelmadell/" target="_blank" rel="noopener noreferrer">Michael Madell</a>.
+    View the source on 
+    
+    <a href="https://github.com/michaelmadell/TailwindV4-2-Css" target="_blank" rel="noopener noreferrer">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/9/95/Font_Awesome_5_brands_github.svg" alt="GitHub" style="width: 1rem; height: 1rem; filter: invert(50%) sepia(100%) grayscale(100%) brightness(100%);">
+      GitHub
+    </a>.
+  </footer>
 
   <script>
     // ─── Spacing scale (Tailwind default) ────────────────────────────────────
