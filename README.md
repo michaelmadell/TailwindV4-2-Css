@@ -2,6 +2,8 @@
 
 Minimal static web app that converts Tailwind utility class strings to plain CSS in the browser. This guide shows how to host it publicly and add basic SEO/share metadata.
 
+latest Commit hosted here: https://michaelmadell.github.io/TailwindV4-2-Css/
+
 ## Quick test locally
 1) Open `index.html` in your browser, or run a lightweight server (prevents clipboard/security quirks):
    - Python: `python -m http.server 8000`
